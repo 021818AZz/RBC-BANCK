@@ -57,18 +57,28 @@
       text-align: center;
     }
     
-    .country-code {
+    .country-code-container {
       position: absolute;
       left: 14px;
       top: 50%;
       transform: translateY(-50%);
-      color: #111827;
-      font-size: 14px;
+      display: flex;
+      align-items: center;
       pointer-events: none;
     }
     
+    .country-code {
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 14px;
+      color: #111827;
+      margin-left: 8px;
+    }
+    
     .phone-input {
-      padding-left: 60px !important;
+      padding-left: 90px !important;
     }
   </style>
 </head>
@@ -91,8 +101,10 @@
 
         <!-- Telefone -->
         <div class="relative">
-          <img src="https://i.postimg.cc/h4xWMy01/image.png" alt="Telefone" class="input-icon" />
-          <span class="country-code">+++244</span>
+          <div class="country-code-container">
+            <img src="https://i.postimg.cc/h4xWMy01/image.png" alt="Telefone" class="input-icon" />
+            <span class="country-code">+244</span>
+          </div>
           <input
             id="telefone"
             name="telefone"
@@ -100,7 +112,7 @@
             type="text"
             maxlength="9"
             pattern="\d{9}"
-            placeholder="   Digite os 9 números"
+            placeholder="Digite os 9 números"
             class="input-style phone-input" />
         </div>
 

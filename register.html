@@ -57,18 +57,28 @@
       text-align: center;
     }
     
-    .country-code {
+    .country-code-container {
       position: absolute;
       left: 14px;
       top: 50%;
       transform: translateY(-50%);
-      color: #111827;
-      font-size: 14px;
+      display: flex;
+      align-items: center;
       pointer-events: none;
     }
     
+    .country-code {
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 14px;
+      color: #111827;
+      margin-left: 8px;
+    }
+    
     .phone-input {
-      padding-left: 60px !important;
+      padding-left: 90px !important;
     }
   </style>
 </head>
@@ -91,8 +101,10 @@
 
         <!-- Telefone -->
         <div class="relative">
-          <img src="https://i.postimg.cc/h4xWMy01/image.png" alt="Telefone" class="input-icon" />
-          <span class="country-code">+244</span>
+          <div class="country-code-container">
+            <img src="https://i.postimg.cc/h4xWMy01/image.png" alt="Telefone" class="input-icon" />
+            <span class="country-code">+244</span>
+          </div>
           <input
             id="telefone"
             name="telefone"
@@ -100,7 +112,7 @@
             type="text"
             maxlength="9"
             pattern="\d{9}"
-            placeholder="     Digite os 9 números"
+            placeholder="Digite os 9 números"
             class="input-style phone-input" />
         </div>
 
@@ -112,7 +124,9 @@
             name="senha"
             required
             type="password"
-            placeholder="Crie uma senha"
+            placeholder="Crie uma senha (6-16 caracteres)"
+            minlength="6"
+            maxlength="16"
             class="input-style" />
         </div>
 
@@ -170,51 +184,57 @@
       
       setTimeout(() => {
         toast.classList.replace("opacity-100", "opacity-0");
-        setTimeout(() => toast.classList.add('hidden'), 300);
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          window.location.reload(); // Recarrega a página após o toast desaparecer
+        }, 300);
       }, 3000);
     }
 
     // Manipular o envio do formulário
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const telefone = '+244' + document.getElementById('telefone').value;
-    const senha = document.getElementById('senha').value;
-    const codigoConvite = document.getElementById('codigoConvite').value;
-    
-    if (document.getElementById('telefone').value.length !== 9) {
+      e.preventDefault();
+      
+      const telefone = '+244' + document.getElementById('telefone').value;
+      const senha = document.getElementById('senha').value;
+      const codigoConvite = document.getElementById('codigoConvite').value;
+      
+      // Validações
+      if (document.getElementById('telefone').value.length !== 9) {
         showToast('Por favor, insira os 9 dígitos do número de telefone');
         return;
-    }
-    
-    try {
+      }
+      
+      if (senha.length < 6 || senha.length > 16) {
+        showToast('A senha deve ter entre 6 e 16 caracteres');
+        return;
+      }
+      
+      try {
         const response = await fetch('https://bd-uopv.onrender.com/usuarios', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                telefone,
-                senha,
-                codigoConvite // Removido o codigoReferido extra
-            })
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            telefone,
+            senha,
+            codigoConvite
+          })
         });
         
         const data = await response.json();
         
         if (response.ok) {
-            showToast('Cadastro realizado com sucesso!');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 2000);
+          showToast('Cadastro realizado com sucesso!');
         } else {
-            showToast(data.message || 'Erro ao cadastrar');
+          showToast(data.message || 'Erro ao cadastrar');
         }
-    } catch (error) {
+      } catch (error) {
         showToast('Erro na conexão com o servidor');
         console.error('Erro:', error);
-    }
-});
+      }
+    });
   </script>
 </body>
 
