@@ -198,7 +198,7 @@
     });
 
     // Função para mostrar toast
-    function showToast(message) {
+    function showToast(message, shouldRedirect = false) {
       const toast = document.getElementById('toast');
       const toastMessage = document.getElementById('toast-message');
       
@@ -210,7 +210,11 @@
         toast.classList.replace("opacity-100", "opacity-0");
         setTimeout(() => {
           toast.classList.add('hidden');
-          window.location.reload(); // Recarrega a página após o toast desaparecer
+          if (shouldRedirect) {
+            window.location.href = 'index.html'; // Redireciona para index.html
+          } else {
+            window.location.reload(); // Recarrega a página para outros casos
+          }
         }, 300);
       }, 3000);
     }
@@ -255,7 +259,7 @@
         const data = await response.json();
         
         if (response.ok) {
-          showToast('Cadastro realizado com sucesso!');
+          showToast('Cadastro realizado com sucesso!', true); // Redireciona após sucesso
         } else {
           showToast(data.message || 'Erro ao cadastrar');
         }
