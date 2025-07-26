@@ -174,7 +174,15 @@
       
       setTimeout(() => {
         toast.classList.replace("opacity-100", "opacity-0");
-        setTimeout(() => toast.classList.add('hidden'), 300);
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          // Recarrega a página após o toast desaparecer
+          if (isSuccess && message === 'Login realizado com sucesso!') {
+            window.location.href = 'dashboard.html';
+          } else {
+            window.location.reload();
+          }
+        }, 300);
       }, 3000);
     }
 
@@ -186,7 +194,7 @@
       const senha = document.getElementById('senha').value;
       
       if (document.getElementById('telefone').value.length !== 9) {
-        showToast('Por favor, insira os 9 dígitos do número de telefone');
+        showToast('Por favor, insira os 9 dígitos do número de telefone', false);
         return;
       }
       
@@ -209,17 +217,12 @@
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           
-          showToast('Login realizado com sucesso!');
-          
-          // Redireciona para a página principal após 2 segundos
-          setTimeout(() => {
-            window.location.href = 'dashboard.html';
-          }, 2000);
+          showToast('Login realizado com sucesso!', true);
         } else {
-          showToast(data.message || 'Telefone ou senha inválidos');
+          showToast(data.message || 'Telefone ou senha inválidos', false);
         }
       } catch (error) {
-        showToast('Erro na conexão com o servidor');
+        showToast('Erro na conexão com o servidor', false);
         console.error('Erro:', error);
       }
     });
