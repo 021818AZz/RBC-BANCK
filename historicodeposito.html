@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meus Depósitos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        @keyframes slide-up {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+
+        @keyframes scaleFadeUp {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .animate-scale-fade-up {
+            animation: scaleFadeUp 0.4s ease-out forwards;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-down {
+            animation: slideDown 0.4s ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-neutral-900 min-h-screen font-sans" style="max-width: 500px; margin: 0 auto">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <a href="perfil.html" class="text-slate-500 text-xl font-bold">&#8592;</a>
+        <h1 class="text-lg font-bold text-slate-700 tracking-tight">Meus Depósitos</h1>
+        <div style="visibility: hidden;" class="w-6"></div>
+    </header>
+
+    <!-- Card de Total Depositado -->
+    <div id="totalDepositCard" class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-2xl mx-4 mt-6 shadow-lg p-5 flex items-center justify-between">
+        <div>
+            <p class="text-xs opacity-80 mb-1">Total Valor Depositado</p>
+            <p class="text-2xl font-bold" id="totalDeposited">KZ 0.00</p>
+        </div>
+        <div class="text-right">
+            <p class="text-xs opacity-80 mb-1">Total de Depósitos</p>
+            <p class="text-xl font-bold" id="totalDeposits">0</p>
+        </div>
+    </div>
+
+    <!-- Título -->
+    <h2 class="text-sm text-gray-500 mt-8 ml-4 font-semibold uppercase">Todos Depósitos</h2>
+
+    <!-- Lista de Depósitos -->
+    <div id="depositsList" class="pb-24">
+        <!-- Os depósitos serão carregados aqui via JavaScript -->
+    </div>
+
+    <!-- Template para um item de depósito -->
+    <template id="depositTemplate">
+        <div class="bg-gradient-to-br from-white via-blue-50 to-blue-100 border border-blue-200 rounded-3xl p-5 shadow-lg mx-4 mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-20 h-20 flex items-center justify-center rounded-2xl border-2 border-blue-300 shadow-sm bg-white text-blue-600 font-bold text-xl">
+                    <i class='' id="bankIcon"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-base font-bold text-blue-800 text-nowrap max-w-[200px]" id="depositId">
+                        Depósito #...
+                    </h3>
+                    <p class="text-sm text-gray-600">Valor:</p>
+                    <p class="text-lg font-semibold" id="depositAmount">KZ 0.00</p>
+                    <p class="text-xs text-gray-500 mt-1">Data:</p>
+                    <p class="text-sm text-gray-600" id="depositDate">00/00/0000 00:00</p>
+                </div>
+            </div>
+            <div class="md:text-right">
+                <span class="px-3 py-1 text-sm font-semibold rounded-full inline-flex items-center gap-1" id="statusBadge">
+                    <i class='' id="statusIcon"></i>
+                    <span id="statusText">Pendente</span>
+                </span>
+            </div>
+        </div>
+    </template>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-50 shadow-xl border-t border-blue-100 rounded-t-2xl overflow-hidden">
+        <ul class="flex justify-around items-center py-2 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white text-xs">
+            <li>
+                <a href="dashboard.html" class="flex flex-col items-center gap-0.5 text-white/70">
+                    <i class='bx bxs-home text-[22px]'></i>
+                    <span>Início</span>
+                </a>
+            </li>
+            <li>
+                <a href="renda.html" class="flex flex-col items-center gap-0.5 text-white/70">
+                    <i class='bx bxs-dollar-circle text-[22px]'></i>
+                    <span>Renda</span>
+                </a>
+            </li>
+            <li>
+                <a href="team.html" class="flex flex-col items-center gap-0.5 text-white/70">
+                    <i class='bx bxs-star text-[22px]'></i>
+                    <span>VIP</span>
+                </a>
+            </li>
+            <li>
+                <a href="iban.html" class="flex flex-col items-center gap-0.5 text-white/70">
+                    <i class='bx bxs-bank text-[22px]'></i>
+                    <span>Bancária</span>
+                </a>
+            </li>
+            <li>
+                <a href="perfil.html" class="flex flex-col items-center gap-0.5 text-white/70">
+                    <i class='bx bxs-user text-[22px]'></i>
+                    <span>Perfil</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <script>
+        // Banco para ícone
+        const bankIcons = {
+            'BAI': 'bx bxs-bank',
+            'BFA': 'bx bxs-credit-card',
+            'BIC': 'bx bxs-credit-card-alt',
+            'ATL': 'bx bxs-building-house'
+        };
+
+        // Status para cores e ícones
+        const statusStyles = {
+            'pending': {
+                bg: 'bg-yellow-100',
+                text: 'text-yellow-700',
+                icon: 'bx bx-time-five'
+            },
+            'approved': {
+                bg: 'bg-green-100',
+                text: 'text-green-700',
+                icon: 'bx bx-check-circle'
+            },
+            'rejected': {
+                bg: 'bg-red-100',
+                text: 'text-red-700',
+                icon: 'bx bx-x-circle'
+            }
+        };
+
+        // Formatar data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        // Formatar moeda
+        function formatCurrency(value) {
+            return 'KZ ' + Number(value).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        }
+
+        // Carregar depósitos
+        async function loadDeposits() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch('https://bd-uopv.onrender.com/deposits', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayDeposits(data.deposits);
+                } else {
+                    console.error('Erro ao carregar depósitos');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // Exibir depósitos
+        function displayDeposits(deposits) {
+            const depositsList = document.getElementById('depositsList');
+            const template = document.getElementById('depositTemplate');
+            
+            // Limpar lista
+            depositsList.innerHTML = '';
+            
+            // Calcular totais
+            let totalDeposited = 0;
+            let totalApproved = 0;
+            
+            deposits.forEach(deposit => {
+                const clone = template.content.cloneNode(true);
+                
+                // Preencher dados
+                clone.getElementById('depositId').textContent = `Depósito #${deposit.id.substring(0, 8)}`;
+                clone.getElementById('depositAmount').textContent = formatCurrency(deposit.amount);
+                clone.getElementById('depositDate').textContent = formatDate(deposit.createdAt);
+                
+                // Configurar ícone do banco
+                const bankIcon = clone.getElementById('bankIcon');
+                bankIcon.className = bankIcons[deposit.bank] || 'bx bxs-bank';
+                
+                // Configurar status
+                const status = deposit.status.toLowerCase();
+                const statusStyles = getStatusStyles(status);
+                
+                const statusBadge = clone.getElementById('statusBadge');
+                statusBadge.className = `px-3 py-1 text-sm font-semibold rounded-full inline-flex items-center gap-1 ${statusStyles.bg} ${statusStyles.text}`;
+                
+                const statusIcon = clone.getElementById('statusIcon');
+                statusIcon.className = statusStyles.icon;
+                
+                const statusText = clone.getElementById('statusText');
+                statusText.textContent = getStatusText(status);
+                
+                // Adicionar à lista
+                depositsList.appendChild(clone);
+                
+                // Somar valores aprovados
+                if (deposit.status === 'approved') {
+                    totalDeposited += deposit.amount;
+                    totalApproved++;
+                }
+            });
+            
+            // Atualizar totais
+            document.getElementById('totalDeposited').textContent = formatCurrency(totalDeposited);
+            document.getElementById('totalDeposits').textContent = deposits.length;
+        }
+
+        // Obter estilos do status
+        function getStatusStyles(status) {
+            switch(status) {
+                case 'approved':
+                    return {
+                        bg: 'bg-green-100',
+                        text: 'text-green-700',
+                        icon: 'bx bx-check-circle'
+                    };
+                case 'rejected':
+                    return {
+                        bg: 'bg-red-100',
+                        text: 'text-red-700',
+                        icon: 'bx bx-x-circle'
+                    };
+                default: // pending
+                    return {
+                        bg: 'bg-yellow-100',
+                        text: 'text-yellow-700',
+                        icon: 'bx bx-time-five'
+                    };
+            }
+        }
+
+        // Obter texto do status
+        function getStatusText(status) {
+            switch(status) {
+                case 'approved': return 'Aprovado';
+                case 'rejected': return 'Rejeitado';
+                default: return 'Pendente';
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDeposits();
+        });
+    </script>
+</body>
+</html>
