@@ -80,6 +80,11 @@
     .phone-input {
       padding-left: 90px !important;
     }
+    
+    .readonly-input {
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
@@ -139,7 +144,8 @@
             required
             type="text"
             placeholder="Código de convite"
-            class="input-style" />
+            readonly
+            class="input-style readonly-input" />
         </div>
 
         <!-- Link para login -->
@@ -171,6 +177,24 @@
     // Máscara para o telefone (apenas 9 dígitos)
     const phoneMask = IMask(document.querySelector('input[name="telefone"]'), {
       mask: '000000000'
+    });
+
+    // Função para obter parâmetros da URL
+    function getUrlParameter(name) {
+      name = name.replace(/[\[\]]/g, '\\$&');
+      const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+      const results = regex.exec(window.location.href);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
+    // Preencher automaticamente o código de convite se existir na URL
+    document.addEventListener('DOMContentLoaded', function() {
+      const codigoConvite = getUrlParameter('ref');
+      if (codigoConvite) {
+        document.getElementById('codigoConvite').value = codigoConvite;
+      }
     });
 
     // Função para mostrar toast
@@ -207,6 +231,11 @@
       
       if (senha.length < 6 || senha.length > 16) {
         showToast('A senha deve ter entre 6 e 16 caracteres');
+        return;
+      }
+      
+      if (!codigoConvite) {
+        showToast('Código de convite é obrigatório');
         return;
       }
       

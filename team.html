@@ -252,9 +252,9 @@ function updateUI(data) {
   document.getElementById('descontoTotal').textContent = `KZ${data.comissoesTotais?.toFixed(2) || '0.00'}`;
   
   // Atualizar código de afiliado e link
-  document.getElementById('valorAfiliado').textContent = data.codigoConvite || 'C3A095';
+  document.getElementById('valorAfiliado').textContent = data.codigoConvite || '';
   document.getElementById('linkAfiliado').value = 
-    `https://rbc-banck.pages.dev/register.html?ref=${data.codigoConvite || 'C3A095'}`;
+    `https://rbc-banck.pages.dev/register.html?ref=${data.codigoConvite || ''}`;
 
   // Gerar os cards de níveis
   const niveisContainer = document.getElementById('niveisContainer');
