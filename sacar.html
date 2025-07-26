@@ -110,12 +110,12 @@
 
                 <div class="flex items-start gap-2">
                     <div class="w-4 h-4 bg-blue-500 rounded-full animate-pulse mt-1"></div>
-                    <p><strong>Valor do Saque:</strong> Deve estar entre <strong>KZ1,200.00</strong> e <strong>KZ100,000.00</strong>.</p>
+                    <p><strong>Valor do Saque:</strong> Deve estar entre <strong>KZ1,500.00</strong> e <strong>KZ1.000,000.00</strong>.</p>
                 </div>
 
                 <div class="flex items-start gap-2">
                     <div class="w-4 h-4 bg-yellow-500 rounded-full animate-bounce mt-1"></div>
-                    <p><strong>Horário de Atendimento:</strong> De <strong>segunda a sábado</strong>, 24 horas por dia.</p>
+                    <p><strong>Horário de Atendimento:</strong> De <strong>segunda a domingo</strong>, das 9h-21h.</p>
                 </div>
 
                 <div class="flex items-start gap-2">
@@ -125,7 +125,7 @@
 
                 <div class="flex items-start gap-2">
                     <div class="w-4 h-4 bg-purple-500 rounded-full animate-spin mt-1"></div>
-                    <p><strong>Prazo de Recebimento:</strong> De <strong>2h a 48h</strong> após a solicitação.</p>
+                    <p><strong>Prazo de Recebimento:</strong> De <strong>2h a 24h</strong> após a solicitação.</p>
                 </div>
 
                 <div class="flex items-start gap-2">
@@ -290,12 +290,12 @@
                 }
                 
                 if (valorSaque < 1200) {
-                    showToast("O valor mínimo para saque é KZ1,200.00", "error");
+                    showToast("O valor mínimo para saque é KZ1,500.00", "error");
                     return;
                 }
                 
                 if (valorSaque > 100000) {
-                    showToast("O valor máximo para saque é KZ100,000.00", "error");
+                    showToast("O valor máximo para saque é KZ1.000,000.00", "error");
                     return;
                 }
                 
