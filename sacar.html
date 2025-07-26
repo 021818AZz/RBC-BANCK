@@ -180,6 +180,16 @@
     </nav>
 
     <script>
+        // Função para verificar se está dentro do horário permitido (9h-21h, todos os dias)
+        function isWithinWithdrawalTime() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentDay = now.getDay(); // 0 (Domingo) a 6 (Sábado)
+            
+            // Verifica se está entre 9h e 21h (inclusive)
+            return currentHour >= 9 && currentHour < 21;
+        }
+
         // Função para mostrar toast
         function showToast(message, type = 'success') {
             const toastTemplate = document.getElementById('toast-template');
@@ -217,7 +227,6 @@
             // Calcular valor líquido (com 10% de taxa)
             const valorNumerico = parseFloat(valor.replace(',', '.'));
             if (!isNaN(valorNumerico)) {
-
                 const valorLiquido = valorNumerico * 0.9;
                 document.getElementById("valorLiquido").textContent = `Valor líquido: KZ${valorLiquido.toFixed(2).replace('.', ',')}`;
                 document.getElementById("valorLiquido").classList.remove("hidden");
@@ -282,6 +291,12 @@
             const originalBtnText = btnSaque.innerHTML;
             
             try {
+                // Verificar horário de atendimento (9h-21h)
+                if (!isWithinWithdrawalTime()) {
+                    showToast("Saque disponível apenas das 9h às 21h, de segunda a domingo", "error");
+                    return;
+                }
+                
                 // Validar valor
                 const valorSaque = parseFloat(document.getElementById('valorSaque').value.replace(',', '.'));
                 if (isNaN(valorSaque)) {
@@ -289,12 +304,12 @@
                     return;
                 }
                 
-                if (valorSaque < 1200) {
+                if (valorSaque < 1500) {
                     showToast("O valor mínimo para saque é KZ1,500.00", "error");
                     return;
                 }
                 
-                if (valorSaque > 100000) {
+                if (valorSaque > 1000000) {
                     showToast("O valor máximo para saque é KZ1.000,000.00", "error");
                     return;
                 }
