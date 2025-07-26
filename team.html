@@ -75,14 +75,14 @@
             id="linkAfiliado"
             type="text"
             readonly
-            value="https://rk-rl7bk.com/public/register.php?ref=C3A095"
+            value="https://rbc-banck.pages.dev/register?ref=99999"
             class="flex-1 bg-gray-50 text-gray-700 text-xs px-3 py-2 border rounded-md outline-none cursor-default" />
           <button onclick="copiarAfiliado()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs rounded-md">Copiar</button>
         </div>
 
         <p class="mb-2 text-gray-700 font-medium">Seu código de afiliado</p>
         <div class="flex items-center gap-2 mb-3">
-          <div id="valorAfiliado" class="bg-gray-100 text-gray-700 text-xs px-3 py-2 rounded-md">C3A095</div>
+          <div id="valorAfiliado" class="bg-gray-100 text-gray-700 text-xs px-3 py-2 rounded-md"></div>
           <button
             onclick="copiarValorAfiliado()"
             class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs rounded-md">
@@ -259,7 +259,7 @@
           // Atualizar código de afiliado e link
           document.getElementById('valorAfiliado').textContent = data.codigoConvite || '';
           document.getElementById('linkAfiliado').value = 
-            `https://rbc-banck.pages.dev/register.html?ref=${data.codigoConvite || ''}`;
+            `https://rbc-banck.pages.dev/register?ref=${data.codigoConvite || ''}`;
 
           // Gerar os cards de níveis
           const niveisContainer = document.getElementById('niveisContainer');
