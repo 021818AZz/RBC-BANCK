@@ -205,6 +205,11 @@
         </nav>
 
         <script>
+          // Constantes
+const CACHE_KEY = 'userDataCache';
+const CACHE_EXPIRATION = 3 * 1000; // 3 segundos em milissegundos
+const UPDATE_INTERVAL = 3 * 1000; // 3 segundos em milissegundos
+
             // Função para mostrar toast
             function showToast(message, duration = 3000) {
                 const toast = document.getElementById('toast');
@@ -227,55 +232,123 @@
                     .replace(/(\d)(?=(\d{3})+\,)/g, '$1.');
             }
 
-            // Função para carregar o total de retiradas
-            async function carregarTotalRetiradas() {
-                try {
-                    const token = localStorage.getItem('token');
-                    if (!token) return;
+            // Função para salvar dados no cache
+            function saveToCache(data) {
+                const cacheData = {
+                    data: data,
+                    timestamp: new Date().getTime()
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+            }
 
-                    const response = await fetch('https://bd-uopv.onrender.com/withdrawals', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+            // Função para obter dados do cache
+            function getFromCache() {
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                if (!cachedData) return null;
+                
+                const parsedData = JSON.parse(cachedData);
+                const now = new Date().getTime();
+                
+                // Verifica se os dados estão expirados
+                if (now - parsedData.timestamp > CACHE_EXPIRATION) {
+                    return null;
+                }
+                
+                return parsedData.data;
+            }
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success && data.withdrawals) {
-                            const total = data.withdrawals.reduce((sum, w) => sum + w.amount, 0);
-                            document.getElementById('total-retiradas').textContent = formatarMoedaKZ(total);
-                        } else {
-                            document.getElementById('total-retiradas').textContent = 'KZ 0,00';
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar retiradas:', error);
-                    document.getElementById('total-retiradas').textContent = 'KZ 0,00';
+            // Função para atualizar a interface com os dados
+            function updateUI(data) {
+                if (!data) return;
+                
+                const user = data.usuario || {};
+                
+                // Atualiza informações básicas
+                document.getElementById('user-id').textContent = `ID: ${user.telefone || 'N/A'}`;
+                document.getElementById('user-balance').textContent = formatarMoedaKZ(user.saldo || 0);
+                document.getElementById('receita-hoje').textContent = formatarMoedaKZ(user.receitaDeHoje || 0);
+                document.getElementById('rendimento-total').textContent = formatarMoedaKZ(user.rendimentoTotal || 0);
+                
+                // Ajusta a exibição do ID
+                adjustIdDisplay();
+                
+                // Atualiza investimentos e retiradas se estiverem nos dados
+                if (data.investimentos) {
+                    const totalInvestido = data.investimentos.reduce((sum, inv) => sum + inv.valor, 0);
+                    document.getElementById('total-investido').textContent = formatarMoedaKZ(totalInvestido);
+                }
+                
+                if (data.withdrawals) {
+                    const totalRetiradas = data.withdrawals.reduce((sum, w) => sum + w.amount, 0);
+                    document.getElementById('total-retiradas').textContent = formatarMoedaKZ(totalRetiradas);
                 }
             }
 
-            // Função para carregar investimentos
-            async function carregarInvestimentos() {
+            // Função para carregar todos os dados do usuário
+            async function loadAllUserData() {
                 try {
                     const token = localStorage.getItem('token');
-                    if (!token) return;
+                    if (!token) {
+                        window.location.href = 'index.html';
+                        return null;
+                    }
 
-                    const response = await fetch('https://bd-uopv.onrender.com/meus-investimentos', {
+                    // Carrega dados do usuário
+                    const userResponse = await fetch('https://bd-uopv.onrender.com/me', {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        const totalInvestido = data.investimentos?.reduce((sum, inv) => sum + inv.valor, 0) || 0;
-                        document.getElementById('total-investido').textContent = formatarMoedaKZ(totalInvestido);
+                    if (!userResponse.ok) {
+                        throw new Error('Erro ao carregar dados do usuário');
                     }
+
+                    const userData = await userResponse.json();
+
+                    // Carrega investimentos
+                    const investimentosResponse = await fetch('https://bd-uopv.onrender.com/meus-investimentos', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    let investimentos = [];
+                    if (investimentosResponse.ok) {
+                        const investimentosData = await investimentosResponse.json();
+                        investimentos = investimentosData.investimentos || [];
+                    }
+
+                    // Carrega retiradas
+                    const retiradasResponse = await fetch('https://bd-uopv.onrender.com/withdrawals', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    let retiradas = [];
+                    if (retiradasResponse.ok) {
+                        const retiradasData = await retiradasResponse.json();
+                        retiradas = retiradasData.withdrawals || [];
+                    }
+
+                    // Combina todos os dados
+                    const combinedData = {
+                        usuario: userData.usuario,
+                        investimentos: investimentos,
+                        withdrawals: retiradas
+                    };
+
+                    // Salva no cache
+                    saveToCache(combinedData);
+                    
+                    return combinedData;
                 } catch (error) {
-                    console.error('Erro ao carregar investimentos:', error);
-                    document.getElementById('total-investido').textContent = 'KZ 0,00';
+                    console.error('Erro ao carregar dados:', error);
+                    return null;
                 }
             }
 
@@ -283,44 +356,6 @@
             function logout() {
                 localStorage.clear();
                 window.location.href = 'index.html';
-            }
-
-            // Função para carregar os dados do usuário
-            async function loadUserData() {
-                try {
-                    const token = localStorage.getItem('token');
-                    if (!token) {
-                        window.location.href = 'index.html';
-                        return;
-                    }
-
-                    const response = await fetch('https://bd-uopv.onrender.com/me', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Erro ao carregar dados do usuário');
-                    }
-
-                    const data = await response.json();
-                    const user = data.usuario;
-
-                    // Atualiza informações básicas
-                    document.getElementById('user-id').textContent = `ID: ${user.telefone || 'N/A'}`;
-                    document.getElementById('user-balance').textContent = formatarMoedaKZ(user.saldo || 0);
-                    document.getElementById('receita-hoje').textContent = formatarMoedaKZ(user.receitaDeHoje || 0);
-                    document.getElementById('rendimento-total').textContent = formatarMoedaKZ(user.rendimentoTotal || 0);
-
-                    // Ajusta a exibição do ID se necessário
-                    adjustIdDisplay();
-
-                } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
-                    showToast('Erro ao carregar dados do usuário');
-                }
             }
 
             // Função para ajustar a exibição do ID conforme necessário
@@ -339,11 +374,41 @@
                 }
             }
 
+            // Função para atualização silenciosa em segundo plano
+            async function silentUpdate() {
+                try {
+                    const newData = await loadAllUserData();
+                    if (newData) {
+                        updateUI(newData);
+                    }
+                } catch (error) {
+                    console.error('Erro na atualização silenciosa:', error);
+                }
+            }
+
+            // Inicializa a aplicação
+            async function initApp() {
+                // Primeiro carrega os dados do cache (se existirem)
+                const cachedData = getFromCache();
+                if (cachedData) {
+                    updateUI(cachedData);
+                }
+                
+                // Depois faz uma requisição para atualizar os dados
+                const freshData = await loadAllUserData();
+                if (freshData) {
+                    updateUI(freshData);
+                } else if (!cachedData) {
+                    showToast('Erro ao carregar dados do usuário');
+                }
+                
+                // Configura a atualização periódica
+                setInterval(silentUpdate, UPDATE_INTERVAL);
+            }
+
             // Carrega os dados quando a página é aberta
             window.addEventListener('DOMContentLoaded', () => {
-                loadUserData();
-                carregarInvestimentos();
-                carregarTotalRetiradas();
+                initApp();
                 window.addEventListener('resize', adjustIdDisplay);
             });
 

@@ -164,6 +164,12 @@
     let investimentos = [];
     let currentUser = null;
     let countdownIntervals = {};
+    let cachedData = {
+      userData: null,
+      investimentos: null,
+      lastUpdated: null
+    };
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos em milissegundos
 
     // Função para mostrar toast
     function showToast(message, isSuccess = true) {
@@ -242,6 +248,13 @@
       }, 1000);
     }
 
+    // Função para verificar se os dados em cache ainda são válidos
+    function isCacheValid() {
+      if (!cachedData.lastUpdated) return false;
+      const now = new Date().getTime();
+      return (now - cachedData.lastUpdated) < CACHE_DURATION;
+    }
+
     // Função para carregar dados do usuário e investimentos
     async function carregarDados() {
       const token = localStorage.getItem('token');
@@ -253,6 +266,21 @@
       }
       
       try {
+        // Verifica se os dados em cache ainda são válidos
+        if (isCacheValid()) {
+          // Usa os dados do cache
+          currentUser = cachedData.userData;
+          investimentos = cachedData.investimentos;
+          
+          // Atualiza a UI com os dados em cache
+          atualizarUI();
+          showToast('Dados atualizados do cache');
+          return;
+        }
+        
+        // Se o cache não é válido ou não existe, busca novos dados da API
+        showToast('Atualizando dados...');
+        
         // Carrega dados do usuário
         const userResponse = await fetch('https://bd-uopv.onrender.com/me', {
           method: 'GET',
@@ -267,10 +295,6 @@
         
         const userData = await userResponse.json();
         currentUser = userData.usuario;
-        
-        // Atualiza o total de rendimentos com os dados do usuário
-        document.getElementById('totalRendimentos').textContent = 
-          formatCurrency(userData.usuario.rendimentoTotal || 0);
         
         // Carrega investimentos
         const response = await fetch('https://bd-uopv.onrender.com/meus-investimentos', {
@@ -287,11 +311,27 @@
         const data = await response.json();
         investimentos = data.investimentos;
         
+        // Atualiza o cache com os novos dados
+        cachedData = {
+          userData: currentUser,
+          investimentos: investimentos,
+          lastUpdated: new Date().getTime()
+        };
+        
         // Atualiza a UI
         atualizarUI();
+        showToast('Dados atualizados com sucesso');
         
       } catch (error) {
-        showToast(error.message);
+        // Se ocorrer um erro, tenta usar os dados em cache se existirem
+        if (cachedData.userData && cachedData.investimentos) {
+          currentUser = cachedData.userData;
+          investimentos = cachedData.investimentos;
+          atualizarUI();
+          showToast('Usando dados do cache devido a erro na conexão');
+        } else {
+          showToast(error.message);
+        }
         console.error('Erro:', error);
       }
     }
@@ -313,6 +353,10 @@
       }
       
       emptyState.classList.add('hidden');
+      
+      // Atualiza o total de rendimentos com os dados do usuário
+      document.getElementById('totalRendimentos').textContent = 
+        formatCurrency(currentUser.rendimentoTotal || 0);
       
       // Calcula totais
       let totalInvestimentos = investimentos.length;
@@ -376,14 +420,15 @@
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
+      // Carrega os dados imediatamente
       carregarDados();
       
-      // Atualiza a cada 30 minutos (1800000 ms)
+      // Configura a atualização automática a cada 10 minutos (600000 ms)
       setInterval(() => {
-        if (investimentos.length > 0) {
-          carregarDados();
-        }
-      }, 1800000);
+        // Força a atualização ignorando o cache
+        cachedData.lastUpdated = null;
+        carregarDados();
+      }, 600000); // 10 minutos
     });
 
     // Atualizar quando o usuário fizer refresh manual
