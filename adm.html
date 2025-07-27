@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo</title>
+    <style>
+        /* Mantenha todos os estilos anteriores e adicione: */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginContainer" class="login-container">
+        <h2>Login Administrativo</h2>
+        <form id="loginForm" class="login-form">
+            <input type="text" id="telefone" placeholder="Telefone" required>
+            <input type="password" id="senha" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="loginMessage" style="color: red; margin-top: 10px;"></div>
+    </div>
+
+    <div id="adminPanel" class="container hidden">
+        <!-- Todo o conteúdo do painel anterior aqui -->
+        <button onclick="logout()" style="background: #f44336; margin-bottom: 20px;">Sair</button>
+        <!-- ... resto do código do painel ... -->
+    </div>
+
+    <script>
+        // Sistema de Login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const telefone = document.getElementById('telefone').value;
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                // 1. Fazer login
+                const loginResponse = await fetch('http://localhost:3333/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telefone, senha })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginResponse.ok) {
+                    throw new Error(loginData.mensagem || 'Erro no login');
+                }
+                
+                // 2. Verificar se é admin
+                const authResponse = await fetch('http://localhost:3333/admin/check-auth', {
+                    headers: { 'Authorization': `Bearer ${loginData.token}` }
+                });
+                
+                const authData = await authResponse.json();
+                
+                if (!authData.isAdmin) {
+                    throw new Error('Esta conta não tem privilégios administrativos');
+                }
+                
+                // 3. Mostrar painel
+                localStorage.setItem('adminToken', loginData.token);
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadUsers();
+                
+            } catch (error) {
+                document.getElementById('loginMessage').textContent = error.message;
+            }
+        });
+        
+        // Verificar se já está logado ao carregar a página
+        async function checkAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+            
+            try {
+                const response = await fetch('http://localhost:3333/admin/check-auth', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    document.getElementById('loginContainer').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    loadUsers();
+                }
+            } catch (error) {
+                localStorage.removeItem('adminToken');
+            }
+        }
+        
+        // Função de logout
+        function logout() {
+            localStorage.removeItem('adminToken');
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+        }
+        
+        // Modificar todas as chamadas fetch para incluir o token
+        async function authFetch(url, options = {}) {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                logout();
+                throw new Error('Sessão expirada');
+            }
+            
+            options.headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+            
+            const response = await fetch(url, options);
+            
+            if (response.status === 401) {
+                logout();
+                throw new Error('Sessão expirada');
+            }
+            
+            return response;
+        }
+        
+        // Atualizar as funções para usar authFetch
+        async function loadUsers() {
+            try {
+                const response = await authFetch('/admin/usuarios');
+                // ... resto da função
+            } catch (error) {
+                console.error('Erro:', error);
+                alert(error.message);
+            }
+        }
+        
+        // Chamar checkAuth quando a página carrega
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>
