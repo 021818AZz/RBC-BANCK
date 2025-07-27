@@ -20,6 +20,19 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    
+    .loader {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
@@ -43,6 +56,14 @@
       <div class="p-4 border-t border-gray-200 text-right">
         <button onclick="fecharModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Fechar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="fixed inset-0 z-40 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
+      <div class="loader mb-4"></div>
+      <p class="text-gray-700">Carregando dados...</p>
     </div>
   </div>
 
@@ -150,6 +171,14 @@
       <script>
         // Variável para armazenar os dados da equipe
         let teamData = {};
+        const CACHE_KEY = 'teamDataCache';
+        const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos em milissegundos
+        
+        // Função para mostrar/ocultar o loading
+        function showLoading(show) {
+          const overlay = document.getElementById('loadingOverlay');
+          overlay.classList.toggle('hidden', !show);
+        }
         
         // Função para abrir o modal com os indicados
         function abrirModal(nivel, tipo = 'todos') {
@@ -219,8 +248,28 @@
           document.getElementById('modalIndicados').classList.add('hidden');
         }
 
-        // Função para buscar os dados da equipe
+        // Função para verificar se os dados em cache ainda são válidos
+        function isCacheValid(cachedData) {
+          if (!cachedData || !cachedData.timestamp) return false;
+          const now = new Date().getTime();
+          return (now - cachedData.timestamp) < CACHE_DURATION;
+        }
+
+        // Função para buscar os dados da equipe (com cache)
         async function fetchTeamData() {
+          // Verificar se há dados válidos no cache
+          const cachedData = JSON.parse(localStorage.getItem(CACHE_KEY));
+          
+          if (cachedData && isCacheValid(cachedData)) {
+            // Usar dados do cache
+            teamData = cachedData.data;
+            updateUI(teamData);
+            return;
+          }
+          
+          // Se não tiver cache válido, buscar na API
+          showLoading(true);
+          
           try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -241,11 +290,29 @@
             }
 
             const data = await response.json();
-            teamData = data; // Armazenar os dados para usar no modal
+            teamData = data;
+            
+            // Atualizar cache com nova data e timestamp
+            const cache = {
+              data: data,
+              timestamp: new Date().getTime()
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+            
             updateUI(data);
           } catch (error) {
             console.error('Erro:', error);
-            showToast('Erro ao carregar dados da equipe', 'error');
+            
+            // Se a API falhar, tentar usar dados do cache mesmo que estejam expirados
+            if (cachedData) {
+              teamData = cachedData.data;
+              updateUI(teamData);
+              showToast('Dados podem estar desatualizados. Usando cache local.', 'warning');
+            } else {
+              showToast('Erro ao carregar dados da equipe', 'error');
+            }
+          } finally {
+            showLoading(false);
           }
         }
 
@@ -336,7 +403,7 @@
           toast.className = "fixed inset-0 flex items-center justify-center z-50 pointer-events-none";
           toast.innerHTML = `
             <div class="bg-white text-gray-800 px-6 py-4 rounded-xl shadow-xl border border-gray-200 max-w-[90%] w-full max-w-sm text-center flex items-center gap-3 animate-fade-in">
-              <svg class="w-5 h-5 ${type === 'success' ? 'text-green-500' : 'text-red-500'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 ${type === 'success' ? 'text-green-500' : type === 'warning' ? 'text-yellow-500' : 'text-red-500'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}" />
               </svg>
               <span class="text-sm font-medium">${message}</span>
